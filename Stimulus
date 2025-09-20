@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STIMULUS — The Degen Stimulus Check</title>
+  <meta name="description" content="STIMULUS — a memecoin that gives back. Pump → Print → Payout." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#070707;
+      --card:#111214;
+      --ink:#f5f7fa;
+      --muted:#a7abb6;
+      --neon:#36ff6a;
+      --neon2:#18cf4f;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    /* Falling bills layer */
+    #bill-field{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+    .bill{
+      position:absolute;top:-120px;width:140px;aspect-ratio:300/130;opacity:.8;
+      filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));
+      background:
+        radial-gradient(circle at 22% 52%, #0e5644 0 26px, transparent 27px),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 50%),
+        linear-gradient(135deg, #0b3b2e, #116b54);
+      border:6px solid #0a2a22;border-radius:12px;position:absolute;
+    }
+    .bill::before{
+      content:"";position:absolute;left:18px;top:18px;right:18px;bottom:18px;border-radius:8px;
+      border:3px dashed #1da77a;opacity:.9
+    }
+    .bill::after{
+      content:"100";position:absolute;right:18px;bottom:24px;font-weight:800;font-size:36px;color:#aef5d7;
+      text-shadow:0 0 6px rgba(0,0,0,.4)
+    }
+    .bill .usd{
+      position:absolute;left:60px;top:65px;transform:translate(-50%,-50%);
+      color:#aef5d7;font-weight:900;font-size:28px;text-shadow:0 0 6px rgba(0,0,0,.4)
+    }
+    @keyframes fall{
+      0%{transform:translateY(-160px) rotate(0deg)}
+      100%{transform:translateY(110vh) rotate(360deg)}
+    }
+
+    /* Hero */
+    .hero{
+      position:relative;z-index:1;text-align:center;padding:76px 16px 26px;
+      background:radial-gradient(ellipse at 50% 10%, rgba(54,255,106,0.10), rgba(0,0,0,0) 40%)
+    }
+    .hero h1{
+      margin:0 0 6px;font-size:64px;letter-spacing:1.5px;font-weight:900;
+      text-shadow:0 0 18px rgba(54,255,106,.55), 0 0 40px rgba(24,207,79,.35)
+    }
+    .subtitle{opacity:.9;margin:0}
+
+    /* Layout */
+    .container{position:relative;z-index:1;max-width:980px;margin:18px auto 80px;padding:0 16px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+      border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 16px;margin:14px 0;
+      box-shadow:0 20px 60px rgba(0,0,0,.35)
+    }
+    .card h2{margin:0 0 8px;font-size:22px}
+    .muted{color:var(--muted);margin-top:0}
+
+    .copyrow,.linkrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+    .mono{
+      width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+      background:#0d0e10;color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px
+    }
+    .btn{
+      padding:12px 16px;border-radius:12px;background:var(--neon);color:#05200e;border:none;
+      font-weight:800;cursor:pointer
+    }
+    .btn:hover{filter:brightness(.95);transform:translateY(-1px)}
+    .btn.outline{background:transparent;color:var(--ink);border:1px solid rgba(255,255,255,.12)}
+    .toast{height:18px;margin:8px 0 0;color:var(--neon);font-size:13px}
+
+    .milestones{display:grid;gap:12px}
+    .mile{
+      display:grid;grid-template-columns:1.2fr .8fr;gap:10px;align-items:center;padding:12px;
+      background:#0e0f12;border:1px solid rgba(255,255,255,.06);border-radius:12px
+    }
+    .cap{font-weight:700}
+    .give{color:var(--neon);font-weight:800}
+    .fineprint{color:var(--muted);font-size:12px;margin-top:10px}
+
+    .footer{text-align:center;color:var(--muted);padding:36px 16px}
+
+    @media (max-width:640px){
+      .hero h1{font-size:44px}
+      .mile{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <!-- Falling money layer -->
+  <div id="bill-field" aria-hidden="true"></div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <h1>STIMULUS</h1>
+    <p class="subtitle">$TIMULUS — The Degen Stimulus Check</p>
+  </header>
+
+  <main class="container">
+    <!-- Contract Address -->
+    <section class="card" id="contract">
+      <h2>Contract Address</h2>
+      <p class="muted">Paste your CA after launch. Tap to copy.</p>
+      <div class="copyrow">
+        <input id="caInput" class="mono" type="text" value="PASTE_YOUR_CA_HERE" readonly />
+        <button class="btn" onclick="copyCA()">Copy</button>
+      </div>
+      <p id="copyToast" class="toast" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- Dex / Chart -->
+    <section class="card" id="dex">
+      <h2>DEX / Chart</h2>
+      <p class="muted">Add your live DexScreener or Raydium link here.</p>
+      <div class="linkrow">
+        <input id="dexInput" class="mono" type="text" value="https://dexscreener.com/solana/REPLACE_WITH_POOL" readonly />
+        <a class="btn outline" id="dexBtn" href="https://dexscreener.com/solana/REPLACE_WITH_POOL" target="_blank" rel="noopener">Open</a>
+      </div>
+    </section>
+
+    <!-- Purpose -->
+    <section class="card" id="purpose">
+      <h2>Purpose</h2>
+      <p><strong>STIMULUS</strong> flips meme culture on its head: we <em>give back</em>. When the community hits milestones, we unlock
+        <strong>Stimulus Drops</strong> — cash prizes, meme-contest rewards, and raids funded from a transparent community vault.
+        No promises of profit; no roadmap cope. Just degen energy + visible givebacks.</p>
+    </section>
+
+    <!-- Milestone Roadmap -->
+    <section class="card" id="milestones">
+      <h2>Milestone Roadmap — “Stimulus Drops”</h2>
+      <div class="milestones">
+        <div class="mile">
+          <div class="cap">$1,000,000 Market Cap</div>
+          <div class="give">→ <strong>$10,000</strong> Stimulus Drop</div>
+        </div>
+        <div class="mile">
+          <div class="cap">$5,000,000 Market Cap</div>
+          <div class="give">→ <strong>$50,000</strong> in community rewards</div>
+        </div>
+        <div class="mile">
+          <div class="cap">$10,000,000 Market Cap</div>
+          <div class="give">→ <strong>$100,000</strong> community fund + holder vote</div>
+        </div>
+      </div>
+      <p class="fineprint">All drops are run as contests/raids using the community wallet. This is a parody memecoin; DYOR.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© STIMULUS — Pump → Print → Payout • Add Telegram / X links here</p>
+  </footer>
+
+  <script>
+    // Copy-to-clipboard for Contract Address
+    function copyCA(){
+      const input = document.getElementById('caInput');
+      input.select(); input.setSelectionRange(0, 99999);
+      const toast = document.getElementById('copyToast');
+      const fallback = () => {
+        navigator.clipboard.writeText(input.value).then(()=>{
+          toast.textContent = 'Address copied!'; setTimeout(()=>toast.textContent='', 1600);
+        });
+      };
+      try{
+        const ok = document.execCommand('copy');
+        if(ok){ toast.textContent='Address copied!'; setTimeout(()=>toast.textContent='',1600); }
+        else{ fallback(); }
+      }catch(e){ fallback(); }
+    }
+
+    // Falling $100 bills
+    const field = document.getElementById('bill-field');
+    const BILL_COUNT = 22; // how many bills on screen
+
+    function spawnBill(){
+      const d = document.createElement('div');
+      d.className = 'bill';
+      // random position / timing
+      d.style.left = (Math.random()*100) + 'vw';
+      const dur = 6 + Math.random()*7;          // 6s - 13s
+      const delay = Math.random()*3;            // 0 - 3s
+      const rotStart = Math.floor(Math.random()*360);
+      d.style.animation = `fall ${dur}s linear ${delay}s forwards`;
+      d.style.transform = `rotate(${rotStart}deg)`;
+      // add the $ symbol as an inner element
+      const sym = document.createElement('div');
+      sym.className = 'usd';
+      sym.textContent = '$';
+      d.appendChild(sym);
+      field.appendChild(d);
+
+      d.addEventListener('animationend', ()=>{
+        field.removeChild(d);
+        // respawn another after a short random pause
+        setTimeout(spawnBill, Math.random()*1200);
+      });
+    }
+
+    for(let i=0;i<BILL_COUNT;i++) spawnBill();
+  </script>
+</body>
+</html>
